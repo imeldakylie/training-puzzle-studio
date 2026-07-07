@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puzzle Architecture Studio</title>
     
-    <!-- Design Resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -101,6 +100,7 @@
         }
         .phone-screen {
             flex: 1; padding: 25px 15px; box-sizing: border-box; overflow-y: auto; display: flex; flex-direction: column;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1e38 100%);
         }
 
         .preview-logo { max-width: 120px; max-height: 45px; object-fit: contain; margin: 0 auto 15px auto; display: block; }
@@ -244,25 +244,47 @@
     </div>
 
     <script>
-        lucide.createIcons();
         let qrEngine = null;
         let localCompressedLogo = "";
 
-        // Wire Drag and Drop Events
-        const dropZone = document.getElementById('logoDropZone');
-        const fileInput = document.getElementById('logoFileInput');
+        // Wait securely for the DOM structure to map before running workspace logic
+        window.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('logoDropZone');
+            const fileInput = document.getElementById('logoFileInput');
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--accent)'; });
-        dropZone.addEventListener('dragleave', () => dropZone.style.borderColor = 'var(--border-color)'; });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.style.borderColor = 'var(--border-color)';
-            if(e.dataTransfer.files.length) processUploadedImage(e.dataTransfer.files[0]);
+            if (dropZone && fileInput) {
+                dropZone.addEventListener('click', () => fileInput.click());
+                
+                // CRITICAL FIX: Stop event propagation so clicking the file selection node 
+                // does not trigger the parent container's click listener and infinitely loop!
+                fileInput.addEventListener('click', (e) => e.stopPropagation());
+                
+                dropZone.addEventListener('dragover', (e) => { 
+                    e.preventDefault(); 
+                    dropZone.style.borderColor = 'var(--accent)'; 
+                });
+                dropZone.addEventListener('dragleave', () => { 
+                    dropZone.style.borderColor = 'var(--border-color)'; 
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = 'var(--border-color)';
+                    if(e.dataTransfer.files.length) processUploadedImage(e.dataTransfer.files[0]);
+                });
+                fileInput.addEventListener('change', (e) => {
+                    if(e.target.files.length) processUploadedImage(e.target.files[0]);
+                });
+            }
+
+            updateDatasetDefaults();
+            triggerLivePreview();
         });
-        fileInput.addEventListener('change', (e) => {
-            if(e.target.files.length) processUploadedImage(e.target.files[0]);
-        });
+
+        function safeRenderIcons() {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
 
         function processUploadedImage(file) {
             const reader = new FileReader();
@@ -273,7 +295,6 @@
                     let width = img.width;
                     let height = img.height;
                     
-                    // Force maximum size constraints to minimize Base64 footprint in the URL parameters
                     const maxW = 120; const maxH = 45;
                     if (width > maxW) { height *= maxW / width; width = maxW; }
                     if (height > maxH) { width *= maxH / height; height = maxH; }
@@ -282,7 +303,6 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Compress image down to a lightweight 60% quality JPEG format
                     localCompressedLogo = canvas.toDataURL('image/jpeg', 0.6);
                     document.getElementById('logoUrl').value = ""; 
                     document.getElementById('dropzoneText').innerText = "✓ " + file.name.substring(0, 18) + "...";
@@ -296,11 +316,13 @@
         function clearFileInput() {
             localCompressedLogo = "";
             document.getElementById('dropzoneText').innerText = "Drop PNG/JPG file or click to choose";
-            fileInput.value = "";
+            document.getElementById('logoFileInput').value = "";
         }
 
         function updateDatasetDefaults() {
-            const mode = document.querySelector('input[name="gameMode"]:checked').value;
+            const checkedMode = document.querySelector('input[name="gameMode"]:checked');
+            if (!checkedMode) return;
+            const mode = checkedMode.value;
             const textarea = document.getElementById('csvInput');
             if (mode === "sequence") {
                 textarea.value = "1, Model selection & capability alignment\n2, Prompt design methodology\n3, Evaluation & iteration loops\n4, Risk controls (hallucination/bias)\n5, Deployment + monitoring";
@@ -331,6 +353,8 @@
             const font = document.getElementById('fontStyle').value;
             const accentColor = document.getElementById('colorAccent').value;
             
+            if(!screen || !logo) return;
+
             screen.style.fontFamily = font;
             screen.style.background = `linear-gradient(135deg, ${document.getElementById('colorBgStart').value} 0%, ${document.getElementById('colorBgEnd').value} 100%)`;
             screen.style.color = document.getElementById('colorText').value;
@@ -363,14 +387,13 @@
                     }
                 }
             });
-            lucide.createIcons();
+            safeRenderIcons();
             if(mode === "matching") {
                 setTimeout(syncPreviewHeights, 50);
             }
         }
 
         function compileAndExportPuzzle() {
-            // Highly compacted structural data matrix conversion 
             const payloadArray = [
                 document.querySelector('input[name="gameMode"]:checked').value,
                 document.getElementById('csvInput').value.trim(),
@@ -398,22 +421,23 @@
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = '';
             
-            // Render optimized low redundancy blocks for maximum scalability/scanning ease
-            qrEngine = new QRCode(qrContainer, {
-                text: targetUrl,
-                width: 220,
-                height: 220,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.L
-            });
+            if (typeof QRCode !== 'undefined') {
+                qrEngine = new QRCode(qrContainer, {
+                    text: targetUrl,
+                    width: 220,
+                    height: 220,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+            }
         }
 
         function closeModal() { document.getElementById('exportModal').style.display = 'none'; }
-        window.addEventListener('resize', () => { if(document.getElementById('modeMatch').checked) syncPreviewHeights(); });
-
-        updateDatasetDefaults();
-        triggerLivePreview();
+        window.addEventListener('resize', () => { 
+            const checkMode = document.querySelector('input[name="gameMode"]:checked');
+            if(checkMode && checkMode.value === "matching") syncPreviewHeights(); 
+        });
     </script>
 </body>
 </html>
