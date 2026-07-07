@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puzzle Architecture Studio</title>
     
+    <!-- Design Resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -102,7 +103,7 @@
         .preview-title { font-size: 1.4rem; font-weight: 700; text-align: center; margin: 0 0 5px 0; letter-spacing: -0.02em; }
         .preview-sub { font-size: 0.8rem; text-align: center; opacity: 0.7; margin-bottom: 25px; }
         
-        /* Fixed Real-Time Multi-Layout Preview Container */
+        /* Real-Time Multi-Layout Preview Container */
         .preview-grid-container { display: flex; flex-direction: column; gap: 8px; width: 100%; }
         .preview-matching-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; align-items: center; }
 
@@ -113,6 +114,7 @@
         }
         .mock-piece.static { border-style: dashed; background: rgba(255,255,255,0.02); color: var(--text-muted); }
 
+        /* Optimized QR Modal Sizing Controls */
         .modal-overlay {
             position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.95);
             backdrop-filter: blur(8px); display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; z-index: 100;
@@ -126,8 +128,8 @@
             background: white; 
             padding: 12px; 
             border-radius: 12px; 
-            width: 250px;  /* Bumped up from 160px */
-            height: 250px; /* Bumped up from 160px */
+            width: 250px; 
+            height: 250px; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -278,7 +280,6 @@
                         div.innerHTML = `<i data-lucide="layers" style="color:${accentColor}; width:16px; height:16px;"></i> <span>${parts[1].trim()}</span>`;
                         container.appendChild(div);
                     } else {
-                        // FIX: Generate side-by-side row elements to represent the split columns grid interface visually!
                         const rowWrapper = document.createElement('div');
                         rowWrapper.className = 'preview-matching-row';
                         
@@ -299,39 +300,50 @@
         }
 
         function compileAndExportPuzzle() {
-    const configPayload = {
-        m: document.querySelector('input[name="gameMode"]:checked').value,
-        d: document.getElementById('csvInput').value.trim(),
-        l: document.getElementById('logoUrl').value.trim(),
-        f: document.getElementById('fontStyle').value,
-        c1: document.getElementById('colorBgStart').value,
-        c2: document.getElementById('colorBgEnd').value,
-        ca: document.getElementById('colorAccent').value,
-        ct: document.getElementById('colorText').value
-    };
+            const configPayload = {
+                m: document.querySelector('input[name="gameMode"]:checked').value,
+                d: document.getElementById('csvInput').value.trim(),
+                l: document.getElementById('logoUrl').value.trim(),
+                f: document.getElementById('fontStyle').value,
+                c1: document.getElementById('colorBgStart').value,
+                c2: document.getElementById('colorBgEnd').value,
+                ca: document.getElementById('colorAccent').value,
+                ct: document.getElementById('colorText').value
+            };
 
-    const jsonString = JSON.stringify(configPayload);
-    const base64Encoded = btoa(unescape(encodeURIComponent(jsonString)));
+            const jsonString = JSON.stringify(configPayload);
+            const base64Encoded = btoa(unescape(encodeURIComponent(jsonString)));
 
-    const hostPath = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-    const targetUrl = `${hostPath}/play.html?p=${base64Encoded}`;
+            // --- BULLETPROOF REPO PATH BUILDER ---
+            let origPath = window.location.pathname;
+            
+            if (!origPath.endsWith('/') && !origPath.includes('.')) {
+                origPath += '/';
+            }
+            origPath = origPath.replace('index.html', '');
+            if (!origPath.endsWith('/')) {
+                origPath = origPath.substring(0, origPath.lastIndexOf('/') + 1);
+            }
 
-    document.getElementById('deploymentLink').innerText = targetUrl;
-    document.getElementById('exportModal').style.display = 'flex';
+            const targetUrl = window.location.origin + origPath + 'play.html?p=' + base64Encoded;
+            // -------------------------------------
 
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = '';
-    
-    // UPDATED ENGINE OPTIONS
-    qrEngine = new QRCode(qrContainer, {
-        text: targetUrl,
-        width: 250,                             // Larger width
-        height: 250,                            // Larger height
-        colorDark: "#000000",                   // Pure black for maximum contrast
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M     // Medium density (makes pixels much larger!)
-    });
-}
+            document.getElementById('deploymentLink').innerText = targetUrl;
+            document.getElementById('exportModal').style.display = 'flex';
+
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            // Reconfigured with larger footprint and medium data redundancy level
+            qrEngine = new QRCode(qrContainer, {
+                text: targetUrl,
+                width: 250,
+                height: 250,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
 
         function closeModal() { document.getElementById('exportModal').style.display = 'none'; }
 
