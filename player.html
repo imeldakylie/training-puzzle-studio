@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Training Challenge Arena</title>
     
-    <!-- Framework Engine Scripts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -113,13 +112,11 @@
         <h1 id="gameTitle">Challenge Arena</h1>
         <p class="subtitle" id="gameSubtitle">Enter your tracking information records below to step into the puzzle track.</p>
 
-        <!-- Access Registration Screen -->
         <div id="welcomeScreen" class="setup-box">
             <input type="text" id="teamIdentifier" placeholder="Enter Team Name / Number">
             <button class="primary-btn" onclick="initializeGameSession()">Launch Assessment Arena</button>
         </div>
 
-        <!-- Dynamic Game Arena -->
         <div id="gameArena" style="display:none;">
             <div id="sequenceWrapper" class="piece-list"></div>
 
@@ -150,20 +147,27 @@
         let gameLocked = false;
         let sortInstance = null;
 
-        // Dynamic Height Synchronization Architecture Matrix Engine
+        window.addEventListener('DOMContentLoaded', () => {
+            unpackUrlParameters();
+        });
+
+        function safeRenderIcons() {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
+
         function syncMatrixHeights() {
-            if (config.m !== "matching") return;
+            if (!config || config.m !== "matching") return;
             
             const staticCards = document.querySelectorAll('#staticColumn .piece');
             const dragCards = document.querySelectorAll('#draggableColumn .piece');
             
             if(!staticCards.length || !dragCards.length) return;
             
-            // Revert container heights back to auto bounds to capture base text scaling updates
             staticCards.forEach(c => c.style.height = 'auto');
             dragCards.forEach(c => c.style.height = 'auto');
             
-            // Loop step row records matching max bounding footprint bounds dynamically
             const itemsCount = Math.min(staticCards.length, dragCards.length);
             for(let i = 0; i < itemsCount; i++) {
                 const tallestHeight = Math.max(staticCards[i].offsetHeight, dragCards[i].offsetHeight);
@@ -172,7 +176,7 @@
             }
         }
 
-        (function unpackUrlParameters() {
+        function unpackUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
             const encryptedPayload = urlParams.get('p');
             if(!encryptedPayload) {
@@ -182,7 +186,6 @@
                 return;
             }
             try {
-                // Highly compact data retrieval parsing execution
                 const rawPayload = decodeURIComponent(escape(atob(encryptedPayload)));
                 const parts = rawPayload.split('^');
                 
@@ -198,12 +201,12 @@
                 };
                 applyBrandingTokens(config);
             } catch(err) {
-                console.error("Payload compilation interrupt context:", err);
+                console.error("Payload compilation exception:", err);
                 document.getElementById('gameTitle').innerText = "Payload Damage Error";
-                document.getElementById('gameSubtitle').innerText = "Failed to unpack training module variables string securely. Re-export a clean code block from your Studio window.";
+                document.getElementById('gameSubtitle').innerText = "Failed to unpack training module variables string securely.";
                 document.getElementById('welcomeScreen').style.display = 'none';
             }
-        })();
+        }
 
         function applyBrandingTokens(cfg) {
             document.body.style.fontFamily = cfg.f;
@@ -279,14 +282,11 @@
                 animation: 200,
                 ghostClass: 'sortable-ghost',
                 disabled: false,
-                // Fire synchronization calculations immediately on drag updates
                 onSort: function() { syncMatrixHeights(); },
                 onEnd: function() { syncMatrixHeights(); }
             });
 
-            lucide.createIcons();
-            
-            // Execute layout balance adjustment instantly following compilation pass
+            safeRenderIcons();
             if(!isSeq) {
                 setTimeout(syncMatrixHeights, 50);
             }
@@ -339,7 +339,6 @@
                 document.getElementById('revealBtn').style.display = 'block';
             }
 
-            // Sync matrix visual rows post score overlay evaluation updates
             syncMatrixHeights();
             transmitMetricsTelemetry(participant, `${accumulatedScore}/${maxScore}`);
         }
@@ -360,7 +359,7 @@
             });
             
             document.getElementById('revealBtn').style.display = 'none';
-            lucide.createIcons();
+            safeRenderIcons();
             setTimeout(syncMatrixHeights, 20);
         }
 
@@ -379,10 +378,9 @@
                 method: 'POST',
                 mode: 'no-cors',
                 body: JSON.stringify({ team: user, score: outputScore })
-            }).catch(e => console.error("Data tracking capture exception metrics:", e));
+            }).catch(e => console.error("Telemetry failed:", e));
         }
 
-        // Keep heights matched perfectly if the player rotates their mobile device
         window.addEventListener('resize', syncMatrixHeights);
     </script>
 </body>
