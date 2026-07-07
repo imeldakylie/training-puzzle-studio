@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Architecture Studio</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --studio-bg: #0f172a;
+            --sidebar-bg: #1e293b;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--studio-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Fully Responsive Studio Split Layout */
+        .studio-container { display: flex; width: 100vw; height: 100vh; }
+        
+        .control-panel {
+            width: 450px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+            padding: 30px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .preview-area {
+            flex: 1; background: #0b0f19; display: flex; justify-content: center; align-items: center;
+            position: relative; padding: 20px; overflow-y: auto;
+        }
+
+        @media (max-width: 900px) {
+            .studio-container { flex-direction: column; height: auto; }
+            .control-panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); }
+            .preview-area { min-height: 800px; }
+        }
+
+        h2 { font-size: 1.4rem; margin: 0 0 5px 0; font-weight: 700; letter-spacing: -0.02em; }
+        .pane-desc { color: var(--text-muted); font-size: 0.85rem; margin: 0 0 10px 0; }
+        hr { border: 0; border-top: 1px solid var(--border-color); margin: 5px 0; }
+
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+        
+        textarea, select, input[type="text"] {
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px;
+            color: white; padding: 12px; font-size: 0.9rem; font-family: inherit; box-sizing: border-box;
+        }
+        textarea { height: 110px; resize: none; font-family: monospace; font-size: 0.8rem; }
+        
+        .radio-switch {
+            display: grid; grid-template-columns: 1fr 1fr; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);
+        }
+        .radio-switch label {
+            display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; margin: 0;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600; text-transform: none; border-radius: 6px; color: var(--text-muted); transition: all 0.2s;
+        }
+        .radio-switch input { display: none; }
+        .radio-switch input:checked + label { background: var(--accent); color: white; }
+
+        .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .color-picker-box {
+            display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2);
+            padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);
+        }
+        .color-picker-box input[type="color"] {
+            border: none; background: none; width: 32px; height: 32px; cursor: pointer; padding: 0;
+        }
+
+        .action-btn {
+            background: var(--accent); color: white; border: none; padding: 16px; border-radius: 12px;
+            font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s; margin-top: 10px;
+        }
+        .action-btn:hover { background: #2563eb; }
+
+        /* Simulated Smartphone Preview Container */
+        .phone-frame {
+            width: 360px; height: 720px; background: #000; border-radius: 40px; border: 12px solid #22252a;
+            box-shadow: 0 25px 60px -10px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; position: relative;
+        }
+        .phone-screen {
+            flex: 1; padding: 25px 15px; box-sizing: border-box; overflow-y: auto; display: flex; flex-direction: column;
+        }
+
+        .preview-logo { max-width: 120px; max-height: 45px; object-fit: contain; margin: 0 auto 15px auto; display: block; }
+        .preview-title { font-size: 1.4rem; font-weight: 700; text-align: center; margin: 0 0 5px 0; letter-spacing: -0.02em; }
+        .preview-sub { font-size: 0.8rem; text-align: center; opacity: 0.7; margin-bottom: 25px; }
+        
+        /* Fixed Real-Time Multi-Layout Preview Container */
+        .preview-grid-container { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .preview-matching-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; align-items: center; }
+
+        .mock-piece {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 12px;
+            border-radius: 10px; font-size: 0.78rem; font-weight: 500; display: flex; align-items: center; gap: 8px;
+            word-break: break-word; line-height: 1.3;
+        }
+        .mock-piece.static { border-style: dashed; background: rgba(255,255,255,0.02); color: var(--text-muted); }
+
+        .modal-overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.95);
+            backdrop-filter: blur(8px); display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; z-index: 100;
+        }
+        .modal-box {
+            background: var(--sidebar-bg); border: 1px solid var(--border-color); padding: 25px; border-radius: 20px;
+            text-align: center; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); box-sizing: border-box;
+        }
+        #qrcode { 
+            margin: 15px auto; 
+            background: white; 
+            padding: 12px; 
+            border-radius: 12px; 
+            width: 250px;  /* Bumped up from 160px */
+            height: 250px; /* Bumped up from 160px */
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        .modal-link { background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; color: var(--accent); font-family: monospace; font-size: 0.75rem; word-break: break-all; margin: 15px 0; text-align: left; max-height: 60px; overflow-y: auto;}
+    </style>
+</head>
+<body>
+
+    <div class="studio-container">
+        <div class="control-panel">
+            <div>
+                <h2>Puzzle Studio</h2>
+                <p class="pane-desc">Design custom gamified micro-learning activities.</p>
+            </div>
+            <hr>
+
+            <div class="form-group">
+                <label>Puzzle Core Mechanics Layout</label>
+                <div class="radio-switch">
+                    <input type="radio" id="modeSeq" name="gameMode" value="sequence" checked onchange="updateDatasetDefaults(); triggerLivePreview();">
+                    <label for="modeSeq"><i data-lucide="list-ordered"></i> Sequence</label>
+                    <input type="radio" id="modeMatch" name="gameMode" value="matching" onchange="updateDatasetDefaults(); triggerLivePreview();">
+                    <label for="modeMatch"><i data-lucide="grid"></i> Match Matrix</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Data Script Text Block (CSV Format)</label>
+                <textarea id="csvInput" oninput="triggerLivePreview()">1, Model selection & capability alignment&#10;2, Prompt design methodology&#10;3, Evaluation & iteration loops&#10;4, Risk controls (hallucination/bias)&#10;5, Deployment + monitoring</textarea>
+            </div>
+
+            <hr>
+            <div>
+                <h2>Visual Branding</h2>
+                <p class="pane-desc">Inject custom typography styles & theme branding colors.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Company Header Brand Logo URL</label>
+                <input type="text" id="logoUrl" placeholder="Paste link to transparent PNG file" value="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&q=80" oninput="triggerLivePreview()">
+            </div>
+
+            <div class="form-group">
+                <label>Typography Font Face Scheme</label>
+                <select id="fontStyle" onchange="triggerLivePreview()">
+                    <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Modern Tech)</option>
+                    <option value="'Inter', sans-serif">Inter (Clean Corporate)</option>
+                    <option value="'Playfair Display', serif">Playfair Display (Premium Editorial)</option>
+                    <option value="'Roboto Mono', monospace">Roboto Mono (Terminal Tech-Ops)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Interface Branding Theme Palette Colors</label>
+                <div class="color-row">
+                    <div class="color-picker-box">
+                        <input type="color" id="colorBgStart" value="#0f172a" oninput="triggerLivePreview()">
+                        <div><label>BG Start</label></div>
+                    </div>
+                    <div class="color-picker-box">
+                        <input type="color" id="colorBgEnd" value="#1e1e38" oninput="triggerLivePreview()">
+                        <div><label>BG End</label></div>
+                    </div>
+                </div>
+                <div class="color-row" style="margin-top:8px;">
+                    <div class="color-picker-box">
+                        <input type="color" id="colorAccent" value="#3b82f6" oninput="triggerLivePreview()">
+                        <div><label>Accent Focus</label></div>
+                    </div>
+                    <div class="color-picker-box">
+                        <input type="color" id="colorText" value="#f8fafc" oninput="triggerLivePreview()">
+                        <div><label>Typography</label></div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="action-btn" onclick="compileAndExportPuzzle()">Generate Deployment Payload</button>
+        </div>
+
+        <div class="preview-area">
+            <div class="phone-frame">
+                <div class="phone-screen" id="previewScreen">
+                    <img id="previewLogo" class="preview-logo" src="" alt="">
+                    <h2 class="preview-title" id="previewTitle">Interactive Challenge</h2>
+                    <p class="preview-sub">Organize components to execute accurately.</p>
+                    
+                    <div id="previewPiecesContainer" class="preview-grid-container"></div>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="exportModal">
+                <div class="modal-box">
+                    <h2 style="color:white; margin:0;">Puzzle Engine Deployed</h2>
+                    <p class="pane-desc">Your session is compiled. Participants can trace access straight by scanning below or using the link.</p>
+                    
+                    <div id="qrcode"></div>
+                    
+                    <div class="modal-link" id="deploymentLink">Generating payload...</div>
+                    
+                    <button class="action-btn" style="width:100%; padding:10px; font-size:0.9rem;" onclick="closeModal()">Return Studio Workspace</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        let qrEngine = null;
+
+        function updateDatasetDefaults() {
+            const mode = document.querySelector('input[name="gameMode"]:checked').value;
+            const textarea = document.getElementById('csvInput');
+            if (mode === "sequence") {
+                textarea.value = "1, Model selection & capability alignment\n2, Prompt design methodology\n3, Evaluation & iteration loops\n4, Risk controls (hallucination/bias)\n5, Deployment + monitoring";
+                document.getElementById('previewTitle').innerText = "AI Lifecycle Challenge";
+            } else {
+                textarea.value = "Q1: What is PDPA?, SG Personal Data Protection Act\nQ2: What is an LLM?, Large Language Model framework\nQ3: What is RAG?, Retrieval Augmented Generation system data injection";
+                document.getElementById('previewTitle').innerText = "Compliance Match Matrix";
+            }
+        }
+
+        function triggerLivePreview() {
+            const screen = document.getElementById('previewScreen');
+            const logo = document.getElementById('previewLogo');
+            const font = document.getElementById('fontStyle').value;
+            const accentColor = document.getElementById('colorAccent').value;
+            
+            screen.style.fontFamily = font;
+            screen.style.background = `linear-gradient(135deg, ${document.getElementById('colorBgStart').value} 0%, ${document.getElementById('colorBgEnd').value} 100%)`;
+            screen.style.color = document.getElementById('colorText').value;
+            
+            const logoUrl = document.getElementById('logoUrl').value.trim();
+            if(logoUrl) { logo.src = logoUrl; logo.style.display = 'block'; } else { logo.style.display = 'none'; }
+
+            const container = document.getElementById('previewPiecesContainer');
+            container.innerHTML = '';
+            
+            const rawLines = document.getElementById('csvInput').value.split('\n');
+            const mode = document.querySelector('input[name="gameMode"]:checked').value;
+
+            rawLines.forEach(line => {
+                const parts = line.split(',');
+                if(parts.length >= 2) {
+                    if(mode === "sequence") {
+                        const div = document.createElement('div');
+                        div.className = 'mock-piece';
+                        div.innerHTML = `<i data-lucide="layers" style="color:${accentColor}; width:16px; height:16px;"></i> <span>${parts[1].trim()}</span>`;
+                        container.appendChild(div);
+                    } else {
+                        // FIX: Generate side-by-side row elements to represent the split columns grid interface visually!
+                        const rowWrapper = document.createElement('div');
+                        rowWrapper.className = 'preview-matching-row';
+                        
+                        rowWrapper.innerHTML = `
+                            <div class="mock-piece static">
+                                <span>${parts[0].trim()}</span>
+                            </div>
+                            <div class="mock-piece">
+                                <i data-lucide="move" style="color:${accentColor}; width:14px; height:14px; flex-shrink:0;"></i>
+                                <span>${parts[1].trim()}</span>
+                            </div>
+                        `;
+                        container.appendChild(rowWrapper);
+                    }
+                }
+            });
+            lucide.createIcons();
+        }
+
+        function compileAndExportPuzzle() {
+    const configPayload = {
+        m: document.querySelector('input[name="gameMode"]:checked').value,
+        d: document.getElementById('csvInput').value.trim(),
+        l: document.getElementById('logoUrl').value.trim(),
+        f: document.getElementById('fontStyle').value,
+        c1: document.getElementById('colorBgStart').value,
+        c2: document.getElementById('colorBgEnd').value,
+        ca: document.getElementById('colorAccent').value,
+        ct: document.getElementById('colorText').value
+    };
+
+    const jsonString = JSON.stringify(configPayload);
+    const base64Encoded = btoa(unescape(encodeURIComponent(jsonString)));
+
+    const hostPath = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+    const targetUrl = `${hostPath}/play.html?p=${base64Encoded}`;
+
+    document.getElementById('deploymentLink').innerText = targetUrl;
+    document.getElementById('exportModal').style.display = 'flex';
+
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '';
+    
+    // UPDATED ENGINE OPTIONS
+    qrEngine = new QRCode(qrContainer, {
+        text: targetUrl,
+        width: 250,                             // Larger width
+        height: 250,                            // Larger height
+        colorDark: "#000000",                   // Pure black for maximum contrast
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M     // Medium density (makes pixels much larger!)
+    });
+}
+
+        function closeModal() { document.getElementById('exportModal').style.display = 'none'; }
+
+        updateDatasetDefaults();
+        triggerLivePreview();
+    </script>
+</body>
+</html>
