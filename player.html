@@ -221,7 +221,6 @@
             const solList = document.getElementById('solutionList');
 
             seqArena.innerHTML = '';
-            matchArena.innerHTML = '';
             solList.innerHTML = '';
 
             // Populate static answer keys
@@ -317,7 +316,6 @@
             if (config.mode === 'sequence') {
                 const currentPieces = document.querySelectorAll('#sequenceArena .game-piece');
                 currentPieces.forEach((piece, idx) => {
-                    // Items should align in indexing order: index 1 should match correct dataset index 0, index 2 matches 1 etc.
                     const pieceId = piece.getAttribute('data-id');
                     if(parsedDataset[idx].id !== pieceId) {
                         isCorrect = false;
@@ -326,7 +324,6 @@
             } else {
                 const currentDraggables = document.querySelectorAll('#sortableColumn .game-piece');
                 currentDraggables.forEach((piece, idx) => {
-                    // Draggable right row index should match identical static anchor left row index
                     const pieceId = piece.getAttribute('data-id');
                     if(parsedDataset[idx].id !== pieceId) {
                         isCorrect = false;
@@ -353,7 +350,6 @@
                 sheet.style.display = 'none';
             } else {
                 sheet.style.display = 'flex';
-                // Scroll smoothly to solution
                 sheet.scrollIntoView({ behavior: 'smooth' });
             }
         }
