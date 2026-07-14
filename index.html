@@ -64,12 +64,6 @@
             color: white; padding: 10px 12px; font-size: 0.88rem; font-family: inherit; box-sizing: border-box;
         }
         textarea { height: 95px; resize: none; font-family: monospace; font-size: 0.8rem; }
-        
-        .dropzone-box {
-            border: 2px dashed var(--border-color); border-radius: 12px; padding: 15px;
-            text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.2s ease;
-        }
-        .dropzone-box:hover { border-color: var(--accent); background: rgba(59, 130, 246, 0.05); }
 
         .radio-switch {
             display: grid; grid-template-columns: 1fr 1fr; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);
@@ -174,13 +168,8 @@
             </div>
 
             <div class="form-group">
-                <label>Company Header Brand Logo</label>
-                <div class="dropzone-box" id="logoDropZone">
-                    <i data-lucide="upload-cloud" style="margin:0 auto 6px auto; display:block; color:var(--text-muted);"></i>
-                    <span id="dropzoneText" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;">Drop PNG/JPG file or click to choose</span>
-                    <input type="file" id="logoFileInput" accept="image/*" style="display:none;">
-                </div>
-                <input type="text" id="logoUrl" placeholder="Or paste absolute image URL link instead" oninput="clearFileInput(); triggerLivePreview();" value="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&q=80">
+                <label>Company Header Brand Logo URL</label>
+                <input type="text" id="logoUrl" placeholder="Paste absolute image URL link here" oninput="triggerLivePreview();" value="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&q=80">
             </div>
 
             <div class="form-group">
@@ -219,7 +208,6 @@
 
             <hr>
             
-            <!-- NEW CUSTOMIZATION LABELS BLOCK -->
             <div>
                 <h2>Interface Labels & Feedback Templates</h2>
                 <p class="pane-desc">Completely customize gameplay actions and alignment evaluation scoring alerts.</p>
@@ -274,34 +262,9 @@
     </div>
 
     <script>
-        let localCompressedLogo = "";
         let currentTimeoutToken = null;
 
         window.addEventListener('DOMContentLoaded', () => {
-            const dropZone = document.getElementById('logoDropZone');
-            const fileInput = document.getElementById('logoFileInput');
-
-            if (dropZone && fileInput) {
-                dropZone.addEventListener('click', () => fileInput.click());
-                fileInput.addEventListener('click', (e) => e.stopPropagation());
-                
-                dropZone.addEventListener('dragover', (e) => { 
-                    e.preventDefault(); 
-                    dropZone.style.borderColor = 'var(--accent)'; 
-                });
-                dropZone.addEventListener('dragleave', () => { 
-                    dropZone.style.borderColor = 'var(--border-color)'; 
-                });
-                dropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropZone.style.borderColor = 'var(--border-color)';
-                    if(e.dataTransfer.files.length) processUploadedImage(e.dataTransfer.files[0]);
-                });
-                fileInput.addEventListener('change', (e) => {
-                    if(e.target.files.length) processUploadedImage(e.target.files[0]);
-                });
-            }
-
             updateDatasetDefaults();
         });
 
@@ -309,41 +272,6 @@
             if (typeof lucide !== 'undefined' && lucide.createIcons) {
                 lucide.createIcons();
             }
-        }
-
-        function processUploadedImage(file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const maxW = 450; const maxH = 130;
-                    let width = img.width; let height = img.height;
-                    
-                    if (width > maxW) { height *= maxW / width; width = maxW; }
-                    if (height > maxH) { width *= maxH / height; height = maxH; }
-                    
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    localCompressedLogo = canvas.toDataURL('image/png');
-                    document.getElementById('logoUrl').value = ""; 
-                    document.getElementById('dropzoneText').innerText = "✓ " + file.name.substring(0, 15) + "...";
-                    triggerLivePreview();
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function clearFileInput() {
-            localCompressedLogo = "";
-            document.getElementById('dropzoneText').innerText = "Drop PNG/JPG file or click to choose";
-            document.getElementById('logoFileInput').value = "";
         }
 
         function updateDatasetDefaults() {
@@ -395,7 +323,7 @@
             screen.style.background = `linear-gradient(135deg, ${document.getElementById('colorBgStart').value} 0%, ${document.getElementById('colorBgEnd').value} 100%)`;
             screen.style.color = document.getElementById('colorText').value;
             
-            const activeLogo = localCompressedLogo || document.getElementById('logoUrl').value.trim();
+            const activeLogo = document.getElementById('logoUrl').value.trim();
             if(activeLogo) { logo.src = activeLogo; logo.style.display = 'block'; } else { logo.style.display = 'none'; }
 
             const container = document.getElementById('previewPiecesContainer');
@@ -448,23 +376,22 @@
                     });
                 }
             } catch (qrError) {
-                console.warn("QR Engine overflow state handled:", qrError);
+                console.warn("QR Engine error:", qrError);
                 qrContainer.innerHTML = `
-                    <div style="font-size:0.75rem; color:#ef4444; padding:12px; text-align:center; display:flex; flex-direction:column; justify-content:center; height:100%; box-sizing:border-box; font-weight:600; background:rgba(239,68,68,0.05);">
+                    <div style="font-size:0.75rem; color:#ef4444; padding:12px; text-align:center; display:flex; flex-direction:column; justify-content:center; height:100%; box-sizing:border-box; font-weight:600;">
                         <i data-lucide="alert-circle" style="margin:0 auto 6px auto; color:#ef4444; width:20px; height:20px;"></i>
-                        <span>Payload Limit Tripped.<br><span style="font-weight:400; color:var(--text-muted); font-size:0.68rem;">Paste a standard web image URL link instead of a local file to restore instant QR creation.</span></span>
+                        <span>Failed to load QR code. Try shortening input data.</span>
                     </div>
                 `;
                 safeRenderIcons();
             }
         }
 
-        async function generateReactivePayload() {
-            // NEW PIPELINE MAPPINGS: Appended the customizable localization tokens onto indices 10, 11, 12, and 13
+        function generateReactivePayload() {
             const payloadArray = [
                 document.querySelector('input[name="gameMode"]:checked').value,
                 document.getElementById('csvInput').value.trim(),
-                localCompressedLogo || document.getElementById('logoUrl').value.trim(),
+                document.getElementById('logoUrl').value.trim(),
                 document.getElementById('fontStyle').value,
                 document.getElementById('colorBgStart').value,
                 document.getElementById('colorBgEnd').value,
@@ -489,23 +416,7 @@
             const targetUrl = window.location.origin + origPath + 'player.html?p=' + base64Encoded;
             const linkBox = document.getElementById('sidebarLiveUrl');
             
-            if (base64Encoded.length > 150) {
-                linkBox.innerText = "Shortening allocation link...";
-                renderQrCodeEngine(targetUrl);
-                
-                try {
-                    const proxyResponse = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(targetUrl)}`);
-                    if (proxyResponse.ok) {
-                        const abbreviatedLink = await proxyResponse.text();
-                        linkBox.innerText = abbreviatedLink;
-                        renderQrCodeEngine(abbreviatedLink);
-                        return;
-                    }
-                } catch (netErr) {
-                    console.log("Shortener pipeline bypassed or blocked by security rules, reverting to long form.");
-                }
-            }
-            
+            // The link is naturally short now, so we display it directly and feed it to the QR generator!
             linkBox.innerText = targetUrl;
             renderQrCodeEngine(targetUrl);
         }
