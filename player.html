@@ -3,159 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Training Challenge Arena</title>
+    <title>Gamified Learning Challenge</title>
     
-    <!-- Framework Engine Scripts -->
+    <!-- Design Resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1e38 100%);
-            --panel-bg: rgba(255, 255, 255, 0.06);
-            --panel-border: rgba(255, 255, 255, 0.1);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --primary: #3b82f6;
-            --success: #10b981;
-            --error: #ef4444;
-            --neutral-btn: #475569;
-            --blueprint: #6366f1;
+            --bg-start: #0f172a;
+            --bg-end: #1e1e38;
+            --accent: #3b82f6;
+            --text-color: #f8fafc;
         }
 
         body {
-            background: var(--bg-gradient);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            margin: 0;
-            box-sizing: border-box;
+            margin: 0; padding: 0; min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            color: var(--text-color);
+            display: flex; justify-content: center; align-items: flex-start;
+            box-sizing: border-box; padding: 20px 15px;
         }
 
-        .container {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 40px 30px;
-            border-radius: 24px;
-            border: 1px solid var(--panel-border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 580px;
-            text-align: center;
-            transition: max-width 0.4s ease;
-            box-sizing: border-box;
+        .player-card {
+            width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 20px;
         }
 
-        .container.wide-layout { max-width: 900px; }
+        .brand-logo { 
+            max-width: 180px; max-height: 65px; object-fit: contain; margin: 0 auto; display: none; 
+        }
 
-        h1 { margin: 0 0 10px 0; font-size: 1.8rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.25; }
-        .subtitle { color: var(--text-secondary); margin: 0 0 30px 0; font-size: 0.95rem; line-height: 1.4; }
+        .header-section { text-align: center; }
+        .header-title { font-size: 1.6rem; font-weight: 700; margin: 0 0 6px 0; letter-spacing: -0.02em; }
+        .header-sub { font-size: 0.88rem; opacity: 0.8; margin: 0; line-height: 1.4; }
+
+        /* Game Containers */
+        .puzzle-arena { display: flex; flex-direction: column; gap: 8px; width: 100%; }
         
-        .logo { 
-            max-width: 180px; max-height: 65px; object-fit: contain; margin: 0 auto 20px auto; display: none; 
-            image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;
+        .matching-split {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; position: relative;
         }
+        .matching-column { display: flex; flex-direction: column; gap: 8px; }
 
-        .setup-box input {
-            padding: 16px; width: 100%; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--panel-border); border-radius: 12px;
-            margin-bottom: 20px; font-size: 1rem; color: var(--text-primary); font-family: inherit; box-sizing: border-box; text-align: center;
+        .game-piece {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 14px;
+            border-radius: 12px; font-size: 0.88rem; font-weight: 500; display: flex; align-items: center; gap: 10px;
+            cursor: grab; word-break: break-word; line-height: 1.35; box-sizing: border-box; transition: background 0.2s, border 0.2s;
         }
-        .setup-box input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+        .game-piece:active { cursor: grabbing; }
+        .game-piece.static-anchor { border-style: dashed; background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.6); cursor: default; }
 
-        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 25px 0; text-align: left; }
-        .column-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; margin-bottom: 12px; }
+        /* Sortable Class Placeholders */
+        .sortable-ghost { opacity: 0.3; background: var(--accent) !important; }
+        .sortable-chosen { border-color: var(--accent); }
 
-        .piece-list { min-height: 150px; }
-
-        .piece {
-            background: var(--panel-bg); color: var(--text-primary); margin: 12px 0; padding: 16px 20px;
-            border-radius: 12px; cursor: grab; display: flex; align-items: center; position: relative;
-            font-weight: 500; font-size: 0.95rem; border: 1px solid var(--panel-border); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.4s, border-color 0.4s;
-            word-break: break-word; line-height: 1.4; box-sizing: border-box;
+        /* Control Buttons */
+        .action-tray { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .btn {
+            border: none; border-radius: 10px; padding: 12px; font-size: 0.92rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: opacity 0.2s, transform 0.1s;
         }
-        .piece.static-anchor { cursor: default; background: rgba(255,255,255,0.02); color: var(--text-secondary); border-style: dashed; }
-        .piece:not(.static-anchor):hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.08); color: white; border: 1px solid rgba(255, 255, 255, 0.1); }
 
-        .piece i { margin-right: 14px; flex-shrink: 0; color: var(--primary); }
-        .sortable-ghost { opacity: 0.2; background: var(--primary) !important; }
-
-        .controls { margin-top: 35px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-        button { padding: 14px 28px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 1rem; font-family: inherit; transition: all 0.2s; }
-        .primary-btn { background: var(--primary); color: white; width: 100%; }
-        .submit-btn { background: var(--success); color: white; flex: 2; min-width: 150px; }
-        .reset-btn { background: var(--neutral-btn); color: var(--text-primary); flex: 1; }
-        .reveal-btn { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); width: 100%; margin-top: 12px; display: none; }
-        
-        button:hover { transform: translateY(-1px); filter: brightness(1.1); }
-        button:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; filter: none; }
-
-        #result-box { margin-top: 30px; padding: 20px; border-radius: 14px; display: none; line-height: 1.6; font-size: 0.95rem; border: 1px solid transparent; }
-
-        @media (max-width: 768px) {
-            .container { padding: 25px 15px; border-radius: 16px; }
-            h1 { font-size: 1.5rem; }
-            .game-grid { gap: 12px; }
-            .piece { padding: 12px; font-size: 0.85rem; margin: 10px 0; }
-            .piece i { margin-right: 8px; width: 14px; height: 14px; }
-            .controls { flex-direction: column; gap: 10px; }
-            .submit-btn, .reset-btn { width: 100%; flex: none; }
+        /* Alert Panel */
+        .alert-panel {
+            border-radius: 10px; padding: 15px; font-size: 0.88rem; line-height: 1.45;
+            display: none; align-items: flex-start; gap: 10px; font-weight: 500;
         }
+        .alert-success { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #10b981; }
+        .alert-danger { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        /* Solution Guide Sheet */
+        .solution-sheet {
+            background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px;
+            padding: 15px; display: none; flex-direction: column; gap: 10px; margin-top: 5px;
+        }
+        .solution-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em; }
+        .solution-list { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; line-height: 1.4; padding-left: 20px; margin: 0; }
     </style>
 </head>
 <body>
 
-    <div class="container" id="mainContainer">
-        <img id="brandLogo" class="logo" src="" alt="Corporate Branding">
-        <h1 id="gameTitle">Challenge Arena</h1>
-        <p class="subtitle" id="gameSubtitle">Loading setup...</p>
-
-        <!-- Access Registration Screen -->
-        <div id="welcomeScreen" class="setup-box">
-            <input type="text" id="teamIdentifier" placeholder="Enter Team Name / Number">
-            <button class="primary-btn" onclick="initializeGameSession()">Launch Assessment Arena</button>
+    <div class="player-card">
+        <img id="playerLogo" class="brand-logo" src="" alt="">
+        
+        <div class="header-section">
+            <h1 id="playerTitle" class="header-title"></h1>
+            <p id="playerSubtitle" class="header-sub"></p>
         </div>
 
-        <!-- Dynamic Game Arena -->
-        <div id="gameArena" style="display:none;">
-            <div id="sequenceWrapper" class="piece-list"></div>
+        <!-- Single sequence layout list -->
+        <div id="sequenceArena" class="puzzle-arena" style="display: none;"></div>
 
-            <div id="matchingWrapper" class="game-grid" style="display:none;">
-                <div>
-                    <div class="column-title">Permanent Items</div>
-                    <div id="staticColumn"></div>
-                </div>
-                <div>
-                    <div class="column-title">Draggable Matches</div>
-                    <div id="draggableColumn" class="piece-list"></div>
-                </div>
-            </div>
+        <!-- Matching matrix layout split -->
+        <div id="matchingArena" class="matching-split" style="display: none;">
+            <div class="matching-column" id="staticColumn"></div>
+            <div class="matching-column" id="sortableColumn"></div>
+        </div>
 
-            <div class="controls">
-                <button id="resetBtn" class="reset-btn" onclick="resetArena()">Reset</button>
-                <button id="submitBtn" class="submit-btn" onclick="evaluateSubmission()">Submit Verification</button>
-                <button id="revealBtn" class="reveal-btn" onclick="displaySolutionBlueprint()">View System Solution Guide</button>
-            </div>
+        <div class="action-tray">
+            <button class="btn btn-primary" id="btnSubmit" onclick="evaluateUserAnswer()"></button>
             
-            <div id="result-box"></div>
+            <div id="alertBox" class="alert-panel">
+                <i id="alertIcon" data-lucide="info" style="flex-shrink:0;"></i>
+                <span id="alertText"></span>
+            </div>
+
+            <button class="btn btn-secondary" id="btnReveal" onclick="toggleSolutionSheet()"></button>
+            <button class="btn btn-secondary" id="btnReset" onclick="resetActivityState()">
+                <i data-lucide="rotate-ccw" style="width:16px; height:16px;"></i> Reset Game
+            </button>
+        </div>
+
+        <div class="solution-sheet" id="solutionSheet">
+            <div class="solution-title">Official Architecture Reference Guide</div>
+            <ol class="solution-list" id="solutionList"></ol>
         </div>
     </div>
 
     <script>
-        let config = null;
+        let config = {};
         let parsedDataset = [];
-        let gameLocked = false;
-        let sortInstance = null;
+        let sortableInstance = null;
 
         window.addEventListener('DOMContentLoaded', () => {
-            unpackUrlParameters();
+            loadDecodedPayload();
+            renderGameElements();
+            safeRenderIcons();
         });
 
         function safeRenderIcons() {
@@ -164,235 +144,225 @@
             }
         }
 
-        function syncMatrixHeights() {
-            if (!config || config.m !== "matching") return;
-            
-            const staticCards = document.querySelectorAll('#staticColumn .piece');
-            const dragCards = document.querySelectorAll('#draggableColumn .piece');
-            
-            if(!staticCards.length || !dragCards.length) return;
-            
-            staticCards.forEach(c => c.style.height = 'auto');
-            dragCards.forEach(c => c.style.height = 'auto');
-            
-            const itemsCount = Math.min(staticCards.length, dragCards.length);
-            for(let i = 0; i < itemsCount; i++) {
-                const tallestHeight = Math.max(staticCards[i].offsetHeight, dragCards[i].offsetHeight);
-                staticCards[i].style.height = tallestHeight + 'px';
-                dragCards[i].style.height = tallestHeight + 'px';
-            }
-        }
-
-        function unpackUrlParameters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const encryptedPayload = urlParams.get('p');
-            if(!encryptedPayload) {
-                document.getElementById('gameTitle').innerText = "Configuration Missing";
-                document.getElementById('gameSubtitle').innerText = "Please trace access directly using a secure link emitted via the Studio console.";
-                document.getElementById('welcomeScreen').style.display = 'none';
+        function loadDecodedPayload() {
+            const params = new URLSearchParams(window.location.search);
+            const p = params.get('p');
+            if (!p) {
+                document.body.innerHTML = `<div style="text-align:center; padding-top:40px; font-family:sans-serif;"><h3>Error: No configuration payload detected.</h3></div>`;
                 return;
             }
+
             try {
-                const rawPayload = decodeURIComponent(escape(atob(encryptedPayload)));
-                const parts = rawPayload.split('^');
+                const decoded = decodeURIComponent(escape(atob(p)));
+                const payload = decoded.split('^');
                 
                 config = {
-                    m: parts[0],
-                    d: parts[1],
-                    l: parts[2],
-                    f: parts[3],
-                    c1: parts[4],
-                    c2: parts[5],
-                    ca: parts[6],
-                    ct: parts[7],
-                    t: parts[8] ? parts[8].trim() : (parts[0] === "sequence" ? "Sequence Puzzle" : "Matrix Alignment Challenge"),
-                    s: parts[9] ? parts[9].trim() : (parts[0] === "sequence" ? "Drag elements into correct running order." : "Match items directly adjacent to its correct anchor prompt."),
-                    // FIXED: Load customized string arrays passed from the Studio console dashboard mapping loops
-                    btnSubmit: parts[10] ? parts[10].trim() : "Submit Verification",
-                    btnReveal: parts[11] ? parts[11].trim() : "View System Solution Guide",
-                    msgSuccess: parts[12] ? parts[12].trim() : "Brilliant work! Everything aligns correctly.",
-                    msgFail: parts[13] ? parts[13].trim() : "Verification failed. Review system architecture guides below."
+                    mode: payload[0],
+                    csvData: payload[1],
+                    logoUrl: payload[2],
+                    fontFace: payload[3],
+                    colorBgStart: payload[4],
+                    colorBgEnd: payload[5],
+                    colorAccent: payload[6],
+                    colorText: payload[7],
+                    title: payload[8],
+                    subtitle: payload[9],
+                    lblSubmit: payload[10],
+                    lblReveal: payload[11],
+                    msgSuccess: payload[12],
+                    msgFailure: payload[13]
                 };
-                applyBrandingTokens(config);
-            } catch(err) {
-                console.error("Payload compilation exception:", err);
-                document.getElementById('gameTitle').innerText = "Payload Damage Error";
-                document.getElementById('gameSubtitle').innerText = "Failed to unpack training module variables string securely.";
-                document.getElementById('welcomeScreen').style.display = 'none';
+
+                // Apply Global Styling Matrices
+                document.documentElement.style.setProperty('--bg-start', config.colorBgStart);
+                document.documentElement.style.setProperty('--bg-end', config.colorBgEnd);
+                document.documentElement.style.setProperty('--accent', config.colorAccent);
+                document.documentElement.style.setProperty('--text-color', config.colorText);
+                document.body.style.fontFamily = config.fontFace;
+
+                // Set logo and texts
+                const logo = document.getElementById('playerLogo');
+                if(config.logoUrl) { logo.src = config.logoUrl; logo.style.display = 'block'; }
+                document.getElementById('playerTitle').innerText = config.title;
+                document.getElementById('playerSubtitle').innerText = config.subtitle;
+                document.getElementById('btnSubmit').innerText = config.lblSubmit;
+                document.getElementById('btnReveal').innerText = config.lblReveal;
+
+                // Parse CSV rows safely
+                config.csvData.split('\n').forEach((line) => {
+                    const parts = line.split(',');
+                    if(parts.length >= 2) {
+                        parsedDataset.push({
+                            id: parts[0].trim(),
+                            value: parts[1].trim()
+                        });
+                    }
+                });
+
+            } catch (e) {
+                console.error(e);
+                document.body.innerHTML = `<div style="text-align:center; padding-top:40px; font-family:sans-serif;"><h3>Error reading configurations or invalid URL data.</h3></div>`;
             }
         }
 
-        function applyBrandingTokens(cfg) {
-            document.body.style.fontFamily = cfg.f;
-            document.body.style.background = `linear-gradient(135deg, ${cfg.c1} 0%, ${cfg.c2} 100%)`;
-            
-            const container = document.getElementById('mainContainer');
-            container.style.color = cfg.ct;
-            container.style.setProperty('--primary', cfg.ca);
-            
-            if(cfg.l) {
-                const img = document.getElementById('brandLogo');
-                img.src = cfg.l;
-                img.style.display = 'block';
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
             }
+            return array;
+        }
 
-            document.getElementById('gameTitle').innerText = cfg.t;
-            document.getElementById('gameSubtitle').innerText = cfg.s;
-            
-            // FIXED: Dynamically map customized text tokens into button elements
-            document.getElementById('submitBtn').innerText = cfg.btnSubmit;
-            document.getElementById('revealBtn').innerText = cfg.btnReveal;
+        function renderGameElements() {
+            const seqArena = document.getElementById('sequenceArena');
+            const matchArena = document.getElementById('matchingArena');
+            const solList = document.getElementById('solutionList');
 
-            parsedDataset = cfg.d.split('\n').map(line => {
-                const parts = line.split(',');
-                if (parts.length >= 2) {
-                    return { id: parts[0].trim(), text: parts.slice(1).join(',').trim() };
+            seqArena.innerHTML = '';
+            matchArena.innerHTML = '';
+            solList.innerHTML = '';
+
+            // Populate static answer keys
+            parsedDataset.forEach(item => {
+                const li = document.createElement('li');
+                if(config.mode === 'sequence') {
+                    li.innerText = item.value;
+                } else {
+                    li.innerHTML = `<strong>${item.id}</strong> — ${item.value}`;
                 }
-                return null;
-            }).filter(i => i !== null);
-        }
+                solList.appendChild(li);
+            });
 
-        function initializeGameSession() {
-            const trackingName = document.getElementById('teamIdentifier').value.trim();
-            if(!trackingName) { alert("Please input a participant or team logging identifier record."); return; }
+            if (config.mode === "sequence") {
+                seqArena.style.display = 'flex';
+                matchArena.style.display = 'none';
 
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('gameArena').style.display = 'block';
+                let shuffled = shuffle([...parsedDataset]);
+                shuffled.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'game-piece';
+                    div.setAttribute('data-id', item.id);
+                    div.innerHTML = `<i data-lucide="layers" style="color:var(--accent); width:18px; height:18px; flex-shrink:0;"></i><span>${item.value}</span>`;
+                    seqArena.appendChild(div);
+                });
 
-            buildPuzzleArena();
-        }
+                sortableInstance = new Sortable(seqArena, {
+                    animation: 180,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen'
+                });
 
-        function buildPuzzleArena() {
-            const isSeq = config.m === "sequence";
-            const targetContainerId = isSeq ? 'sequenceWrapper' : 'draggableColumn';
-            const container = document.getElementById(targetContainerId);
-            container.innerHTML = '';
+            } else {
+                seqArena.style.display = 'none';
+                matchArena.style.display = 'grid';
 
-            if(!isSeq) {
-                document.getElementById('mainContainer').classList.add('wide-layout');
-                document.getElementById('matchingWrapper').style.display = 'grid';
-                
-                const staticBox = document.getElementById('staticColumn');
-                staticBox.innerHTML = '';
+                const staticCol = document.getElementById('staticColumn');
+                const sortableCol = document.getElementById('sortableColumn');
+                staticCol.innerHTML = '';
+                sortableCol.innerHTML = '';
+
+                // Left Static Anchors in original order
                 parsedDataset.forEach(item => {
                     const div = document.createElement('div');
-                    div.className = 'piece static-anchor';
+                    div.className = 'game-piece static-anchor';
                     div.innerHTML = `<span>${item.id}</span>`;
-                    staticBox.appendChild(div);
+                    staticCol.appendChild(div);
                 });
-            }
 
-            let scrambled = [...parsedDataset].sort(() => Math.random() - 0.5);
-            scrambled.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'piece';
-                div.setAttribute('data-id', item.id);
-                div.innerHTML = `<i data-lucide="${isSeq ? 'layers' : 'move'}" style="color:${config.ca}"></i><span>${item.text}</span>`;
-                container.appendChild(div);
-            });
+                // Right Draggable Pieces shuffled
+                let shuffled = shuffle([...parsedDataset]);
+                shuffled.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'game-piece';
+                    div.setAttribute('data-id', item.id);
+                    div.innerHTML = `<i data-lucide="move" style="color:var(--accent); width:16px; height:16px; flex-shrink:0;"></i><span>${item.value}</span>`;
+                    sortableCol.appendChild(div);
+                });
 
-            sortInstance = new Sortable(container, {
-                animation: 200,
-                ghostClass: 'sortable-ghost',
-                disabled: false,
-                onSort: function() { syncMatrixHeights(); },
-                onEnd: function() { syncMatrixHeights(); }
-            });
+                sortableInstance = new Sortable(sortableCol, {
+                    animation: 180,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    onEnd: syncMatrixHeights
+                });
 
-            safeRenderIcons();
-            if(!isSeq) {
                 setTimeout(syncMatrixHeights, 50);
             }
         }
 
-        function evaluateSubmission() {
-            if(gameLocked) return;
-            gameLocked = true;
-            sortInstance.option("disabled", true);
-
-            const isSeq = config.m === "sequence";
-            const selectorStr = isSeq ? '#sequenceWrapper .piece' : '#draggableColumn .piece';
-            const elements = Array.from(document.querySelectorAll(selectorStr));
+        function syncMatrixHeights() {
+            if (config.mode !== 'matching') return;
+            const staticPieces = document.querySelectorAll('#staticColumn .game-piece');
+            const sortedPieces = document.querySelectorAll('#sortableColumn .game-piece');
             
-            let accumulatedScore = 0;
-            let maxScore = parsedDataset.length;
-
-            elements.forEach((card, idx) => {
-                const trackingId = card.getAttribute('data-id');
-                const baselineId = parsedDataset[idx].id;
-                const icon = card.querySelector('i');
-
-                if(trackingId === baselineId) {
-                    accumulatedScore++;
-                    card.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
-                    card.style.borderColor = "var(--success)";
-                    if(icon) icon.style.color = "var(--success)";
-                } else {
-                    card.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
-                    card.style.borderColor = "var(--error)";
-                    if(icon) icon.style.color = "var(--error)";
+            staticPieces.forEach((item, index) => {
+                if (sortedPieces[index]) {
+                    item.style.height = 'auto';
+                    sortedPieces[index].style.height = 'auto';
+                    const maxH = Math.max(item.offsetHeight, sortedPieces[index].offsetHeight);
+                    item.style.height = maxH + 'px';
+                    sortedPieces[index].style.height = maxH + 'px';
                 }
             });
+        }
 
-            document.getElementById('submitBtn').style.display = 'none';
-            document.getElementById('resetBtn').style.display = 'none';
+        function evaluateUserAnswer() {
+            const alertBox = document.getElementById('alertBox');
+            const alertText = document.getElementById('alertText');
+            const alertIcon = document.getElementById('alertIcon');
+            let isCorrect = true;
 
-            const feedbackArea = document.getElementById('result-box');
-            feedbackArea.style.display = 'block';
-            const participant = document.getElementById('teamIdentifier').value.trim();
-
-            // FIXED: Applies custom score descriptions dynamically read from the shortlink data payload arrays
-            if(accumulatedScore === maxScore) {
-                feedbackArea.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
-                feedbackArea.style.borderColor = "rgba(16, 185, 129, 0.2)";
-                feedbackArea.innerHTML = `<b style="color:var(--success)">Score: ${accumulatedScore}/${maxScore}</b><br>${config.msgSuccess}`;
+            if (config.mode === 'sequence') {
+                const currentPieces = document.querySelectorAll('#sequenceArena .game-piece');
+                currentPieces.forEach((piece, idx) => {
+                    // Items should align in indexing order: index 1 should match correct dataset index 0, index 2 matches 1 etc.
+                    const pieceId = piece.getAttribute('data-id');
+                    if(parsedDataset[idx].id !== pieceId) {
+                        isCorrect = false;
+                    }
+                });
             } else {
-                feedbackArea.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
-                feedbackArea.style.borderColor = "rgba(239, 68, 68, 0.2)";
-                feedbackArea.innerHTML = `<b style="color:var(--error)">Score: ${accumulatedScore}/${maxScore}</b><br>${config.msgFail}`;
-                document.getElementById('revealBtn').style.display = 'block';
+                const currentDraggables = document.querySelectorAll('#sortableColumn .game-piece');
+                currentDraggables.forEach((piece, idx) => {
+                    // Draggable right row index should match identical static anchor left row index
+                    const pieceId = piece.getAttribute('data-id');
+                    if(parsedDataset[idx].id !== pieceId) {
+                        isCorrect = false;
+                    }
+                });
             }
 
-            syncMatrixHeights();
-            transmitMetricsTelemetry(participant, `${accumulatedScore}/${maxScore}`);
-        }
-
-        function displaySolutionBlueprint() {
-            const isSeq = config.m === "sequence";
-            const elementBoxId = isSeq ? 'sequenceWrapper' : 'draggableColumn';
-            const box = document.getElementById(elementBoxId);
-            box.innerHTML = '';
-
-            parsedDataset.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'piece';
-                div.style.backgroundColor = "rgba(99, 102, 241, 0.15)";
-                div.style.borderColor = "var(--blueprint)";
-                div.innerHTML = `<i data-lucide="check-circle" style="color:var(--blueprint)"></i><span>${item.text}</span>`;
-                box.appendChild(div);
-            });
-            
-            document.getElementById('revealBtn').style.display = 'none';
+            alertBox.style.display = 'flex';
+            if (isCorrect) {
+                alertBox.className = "alert-panel alert-success";
+                alertText.innerText = config.msgSuccess;
+                alertIcon.setAttribute('data-lucide', 'check-circle');
+            } else {
+                alertBox.className = "alert-panel alert-danger";
+                alertText.innerText = config.msgFailure;
+                alertIcon.setAttribute('data-lucide', 'x-circle');
+            }
             safeRenderIcons();
-            setTimeout(syncMatrixHeights, 20);
         }
 
-        function resetArena() {
-            gameLocked = false;
-            document.getElementById('submitBtn').style.display = 'inline-block';
-            document.getElementById('resetBtn').style.display = 'inline-block';
-            document.getElementById('revealBtn').style.display = 'none';
-            document.getElementById('result-box').style.display = 'none';
-            buildPuzzleArena();
+        function toggleSolutionSheet() {
+            const sheet = document.getElementById('solutionSheet');
+            if (sheet.style.display === 'flex') {
+                sheet.style.display = 'none';
+            } else {
+                sheet.style.display = 'flex';
+                // Scroll smoothly to solution
+                sheet.scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
-        async function transmitMetricsTelemetry(user, outputScore) {
-            const targetAppScriptUrl = "https://script.google.com/macros/s/AKfycby3J-PlUKb54PFpr8XYeqPXODZuoYqxUetbsL90z_QPkwb8oy0JZ1gWxR2IjDJPsSzv/exec";
-            fetch(targetAppScriptUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ team: user, score: outputScore })
-            }).catch(e => console.error("Telemetry error:", e));
+        function resetActivityState() {
+            document.getElementById('alertBox').style.display = 'none';
+            document.getElementById('solutionSheet').style.display = 'none';
+            renderGameElements();
+            safeRenderIcons();
         }
 
         window.addEventListener('resize', syncMatrixHeights);
