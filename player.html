@@ -25,7 +25,7 @@
             background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
             color: var(--text-color);
             display: flex; justify-content: center; align-items: flex-start;
-            box-sizing: border-box; padding: 20px 15px;
+            box-sizing: border-box; padding: 40px 15px;
         }
 
         .player-card {
@@ -39,6 +39,25 @@
         .header-section { text-align: center; }
         .header-title { font-size: 1.6rem; font-weight: 700; margin: 0 0 6px 0; letter-spacing: -0.02em; }
         .header-sub { font-size: 0.88rem; opacity: 0.8; margin: 0; line-height: 1.4; }
+
+        /* Setup / Identity Gate Section */
+        .setup-gate {
+            background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.15);
+            padding: 25px; border-radius: 16px; display: flex; flex-direction: column; gap: 14px; text-align: center;
+        }
+        .gate-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 0.06em; }
+        .gate-input {
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+            color: white; padding: 14px; font-size: 1rem; text-align: center; font-family: inherit; outline: none;
+        }
+        .gate-input:focus { border-color: var(--accent); }
+
+        /* Session Identifier Badge */
+        .session-badge {
+            font-size: 0.8rem; font-weight: 600; background: rgba(59, 130, 246, 0.1); 
+            border: 1px solid rgba(59, 130, 246, 0.2); color: var(--accent); 
+            padding: 6px 14px; border-radius: 20px; align-self: center; display: flex; align-items: center; gap: 6px;
+        }
 
         /* Game Containers */
         .puzzle-arena { display: flex; flex-direction: column; gap: 8px; width: 100%; }
@@ -56,22 +75,21 @@
         .game-piece:active { cursor: grabbing; }
         .game-piece.static-anchor { border-style: dashed; background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.6); cursor: default; }
 
-        /* Sortable Class Placeholders */
         .sortable-ghost { opacity: 0.3; background: var(--accent) !important; }
         .sortable-chosen { border-color: var(--accent); }
 
-        /* Control Buttons */
+        /* Action Buttons */
         .action-tray { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         .btn {
             border: none; border-radius: 10px; padding: 12px; font-size: 0.92rem; font-weight: 600;
             cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: opacity 0.2s, transform 0.1s;
+            transition: opacity 0.2s, transform 0.1s; font-family: inherit;
         }
         .btn:active { transform: scale(0.98); }
         .btn-primary { background: var(--accent); color: white; }
         .btn-secondary { background: rgba(255, 255, 255, 0.08); color: white; border: 1px solid rgba(255, 255, 255, 0.1); }
 
-        /* Alert Panel */
+        /* Alert Box */
         .alert-panel {
             border-radius: 10px; padding: 15px; font-size: 0.88rem; line-height: 1.45;
             display: none; align-items: flex-start; gap: 10px; font-weight: 500;
@@ -79,7 +97,7 @@
         .alert-success { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #10b981; }
         .alert-danger { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; }
 
-        /* Solution Guide Sheet */
+        /* Hidden Solutions Box */
         .solution-sheet {
             background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px;
             padding: 15px; display: none; flex-direction: column; gap: 10px; margin-top: 5px;
@@ -98,32 +116,46 @@
             <p id="playerSubtitle" class="header-sub"></p>
         </div>
 
-        <!-- Single sequence layout list -->
-        <div id="sequenceArena" class="puzzle-arena" style="display: none;"></div>
-
-        <!-- Matching matrix layout split -->
-        <div id="matchingArena" class="matching-split" style="display: none;">
-            <div class="matching-column" id="staticColumn"></div>
-            <div class="matching-column" id="sortableColumn"></div>
+        <!-- Identity Initialization Phase -->
+        <div id="gatekeeperSection" class="setup-gate">
+            <div class="gate-label">Training Verification Required</div>
+            <input type="text" id="teamInputBox" placeholder="Enter Team Number or Identifier">
+            <button class="btn btn-primary" onclick="unlockChallengeWorkspace()">Initialize Activity Matrix</button>
         </div>
 
-        <div class="action-tray">
-            <button class="btn btn-primary" id="btnSubmit" onclick="evaluateUserAnswer()"></button>
-            
-            <div id="alertBox" class="alert-panel">
-                <i id="alertIcon" data-lucide="info" style="flex-shrink:0;"></i>
-                <span id="alertText"></span>
+        <!-- Hidden Main Operational Challenge Segment -->
+        <div id="activePlayroom" style="display: none; flex-direction: column; gap: 20px;">
+            <div id="teamDisplayBadge" class="session-badge"></div>
+
+            <!-- Single Sequence Canvas -->
+            <div id="sequenceArena" class="puzzle-arena" style="display: none;"></div>
+
+            <!-- Double Column Matrix Canvas -->
+            <div id="matchingArena" class="matching-split" style="display: none;">
+                <div class="matching-column" id="staticColumn"></div>
+                <div class="matching-column" id="sortableColumn"></div>
             </div>
 
-            <button class="btn btn-secondary" id="btnReveal" onclick="toggleSolutionSheet()"></button>
-            <button class="btn btn-secondary" id="btnReset" onclick="resetActivityState()">
-                <i data-lucide="rotate-ccw" style="width:16px; height:16px;"></i> Reset Game
-            </button>
-        </div>
+            <div class="action-tray">
+                <button class="btn btn-primary" id="btnSubmit" onclick="evaluateUserAnswer()"></button>
+                
+                <div id="alertBox" class="alert-panel">
+                    <i id="alertIcon" data-lucide="info" style="flex-shrink:0;"></i>
+                    <span id="alertText"></span>
+                </div>
 
-        <div class="solution-sheet" id="solutionSheet">
-            <div class="solution-title">Official Architecture Reference Guide</div>
-            <ol class="solution-list" id="solutionList"></ol>
+                <!-- Kept completely hidden until submit verification runs successfully -->
+                <button class="btn btn-secondary" id="btnReveal" style="display: none;" onclick="toggleSolutionSheet()"></button>
+                
+                <button class="btn btn-secondary" id="btnReset" onclick="resetActivityState()">
+                    <i data-lucide="rotate-ccw" style="width:16px; height:16px;"></i> Reset Game
+                </button>
+            </div>
+
+            <div class="solution-sheet" id="solutionSheet">
+                <div class="solution-title">Official Architecture Reference Guide</div>
+                <ol class="solution-list" id="solutionList"></ol>
+            </div>
         </div>
     </div>
 
@@ -173,14 +205,13 @@
                     msgFailure: payload[13]
                 };
 
-                // Apply Global Styling Matrices
+                // Styling configurations mapping
                 document.documentElement.style.setProperty('--bg-start', config.colorBgStart);
                 document.documentElement.style.setProperty('--bg-end', config.colorBgEnd);
                 document.documentElement.style.setProperty('--accent', config.colorAccent);
                 document.documentElement.style.setProperty('--text-color', config.colorText);
                 document.body.style.fontFamily = config.fontFace;
 
-                // Set logo and texts
                 const logo = document.getElementById('playerLogo');
                 if(config.logoUrl) { logo.src = config.logoUrl; logo.style.display = 'block'; }
                 document.getElementById('playerTitle').innerText = config.title;
@@ -188,7 +219,6 @@
                 document.getElementById('btnSubmit').innerText = config.lblSubmit;
                 document.getElementById('btnReveal').innerText = config.lblReveal;
 
-                // Parse CSV rows safely
                 config.csvData.split('\n').forEach((line) => {
                     const parts = line.split(',');
                     if(parts.length >= 2) {
@@ -215,6 +245,23 @@
             return array;
         }
 
+        function unlockChallengeWorkspace() {
+            const inputVal = document.getElementById('teamInputBox').value.trim();
+            if(!inputVal) {
+                alert("Please declare your designated Team Number or identifier to unlock access.");
+                return;
+            }
+            
+            document.getElementById('gatekeeperSection').style.display = 'none';
+            document.getElementById('activePlayroom').style.display = 'flex';
+            document.getElementById('teamDisplayBadge').innerHTML = `<i data-lucide="users" style="width:14px; height:14px;"></i> Active: <strong>${inputVal}</strong>`;
+            
+            safeRenderIcons();
+            if(config.mode === 'matching') {
+                setTimeout(syncMatrixHeights, 60);
+            }
+        }
+
         function renderGameElements() {
             const seqArena = document.getElementById('sequenceArena');
             const matchArena = document.getElementById('matchingArena');
@@ -223,7 +270,6 @@
             seqArena.innerHTML = '';
             solList.innerHTML = '';
 
-            // Populate static answer keys
             parsedDataset.forEach(item => {
                 const li = document.createElement('li');
                 if(config.mode === 'sequence') {
@@ -262,7 +308,6 @@
                 staticCol.innerHTML = '';
                 sortableCol.innerHTML = '';
 
-                // Left Static Anchors in original order
                 parsedDataset.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'game-piece static-anchor';
@@ -270,7 +315,6 @@
                     staticCol.appendChild(div);
                 });
 
-                // Right Draggable Pieces shuffled
                 let shuffled = shuffle([...parsedDataset]);
                 shuffled.forEach(item => {
                     const div = document.createElement('div');
@@ -286,8 +330,6 @@
                     chosenClass: 'sortable-chosen',
                     onEnd: syncMatrixHeights
                 });
-
-                setTimeout(syncMatrixHeights, 50);
             }
         }
 
@@ -341,6 +383,9 @@
                 alertText.innerText = config.msgFailure;
                 alertIcon.setAttribute('data-lucide', 'x-circle');
             }
+
+            // Expose solution guide button now that submission is complete
+            document.getElementById('btnReveal').style.display = 'flex';
             safeRenderIcons();
         }
 
@@ -357,8 +402,12 @@
         function resetActivityState() {
             document.getElementById('alertBox').style.display = 'none';
             document.getElementById('solutionSheet').style.display = 'none';
+            document.getElementById('btnReveal').style.display = 'none'; // Lock away solution again
             renderGameElements();
             safeRenderIcons();
+            if(config.mode === 'matching') {
+                setTimeout(syncMatrixHeights, 60);
+            }
         }
 
         window.addEventListener('resize', syncMatrixHeights);
